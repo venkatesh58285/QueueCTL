@@ -1,0 +1,29 @@
+# Docker Compose for queuectl
+# Makes it easy to run CLI commands with persistent data
+
+services:
+  # Run any queuectl command:
+  #   docker compose run queuectl enqueue "echo hello"
+  #   docker compose run queuectl status
+  #   docker compose run queuectl list --state pending --json
+  queuectl:
+    build: .
+    volumes:
+      # Persist SQLite database between container runs
+      - queuectl-data:/app/data
+      # Persist logs
+      - queuectl-logs:/app/logs
+
+  # Start workers that run in the background:
+  #   docker compose up worker --scale worker=3
+  worker:
+    build: .
+    entrypoint: ["node", "src/workers/worker-process.js"]
+    volumes:
+      - queuectl-data:/app/data
+      - queuectl-logs:/app/logs
+    restart: unless-stopped
+
+volumes:
+  queuectl-data:
+  queuectl-logs:
